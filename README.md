@@ -1,10 +1,8 @@
 <div align="center">
 
-# 📈 toss-trader
+# toss-trader
 
-**내 돈을 아는 AI 트레이더 — Claude × 토스증권 Open API MCP 서버**
-
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](./requirements.txt)
+**내 돈을 아는 AI 트레이더 — Claude × 토스증권 Open API MCP 서버**[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](./requirements.txt)
 [![MCP](https://img.shields.io/badge/MCP-FastMCP-000000?style=flat-square&logo=modelcontextprotocol&logoColor=white)](https://modelcontextprotocol.io)
 [![Claude](https://img.shields.io/badge/Claude-MCP%20Server-D97757?style=flat-square&logo=claude&logoColor=white)](#mcp-register)
 [![Toss Open API](https://img.shields.io/badge/%ED%86%A0%EC%8A%A4%EC%A6%9D%EA%B6%8C-Open%20API%20v1.2-0064FF?style=flat-square)](https://corp.tossinvest.com/ko/open-api)
@@ -17,16 +15,15 @@
 
 `"내 계좌 어때?"` · `"엔비디아 분석해줘"` · `"엔비디아 50만원 3분할 매수 플랜 짜줘"`
 
-🔗 [설계 스펙 (SPEC.md)](./SPEC.md) · [실주문 안전 흐름](#order-flow) · [보안 경고 & 면책](#disclaimer) · [Profile](https://github.com/khwee2000)
+[설계 스펙 (SPEC.md)](./SPEC.md) · [실주문 안전 흐름](#order-flow) · [보안 경고 & 면책](#disclaimer) · [Profile](https://github.com/khwee2000)
 
 </div>
 
-> [!WARNING]
-> **실제 돈이 오가는 도구다.** 기본은 mock(네트워크 차단)이고, 실주문은 `TOSS_ALLOW_LIVE_ORDERS=1` + `preview_token` + 재입력 `confirm_phrase`를 모두 거쳐야만 나간다. 수익을 보장하지 않으며, 모든 매매 결과는 계좌주 본인 책임이다 — [보안 경고 & 면책](#disclaimer)을 먼저 읽을 것.
+**주의: 실제 돈이 오가는 도구다.** 기본은 mock(네트워크 차단)이고, 실주문은 `TOSS_ALLOW_LIVE_ORDERS=1` + `preview_token` + 재입력 `confirm_phrase`를 모두 거쳐야만 나간다. 수익을 보장하지 않으며, 모든 매매 결과는 계좌주 본인 책임이다 — [보안 경고 & 면책](#disclaimer)을 먼저 읽을 것.
 
 ---
 
-## ✨ 한눈에
+## 한눈에
 
 LLM이 **실제 증권 계좌를 자연어로 다루게** 하는 MCP 서버 + 그 위에서 도는 **변동성 적응형 스윙 트레이딩 엔진**이다. 핵심은 "AI가 실돈을 만진다"는 전제를 정면으로 받아, **안전을 1순위 제약**으로 놓고 전체를 설계한 것.
 
@@ -34,7 +31,7 @@ LLM이 **실제 증권 계좌를 자연어로 다루게** 하는 MCP 서버 + �
 - **실돈 안전 13대 불변식** — mock 기본 · 단계적 해제 · 이중 게이트 실주문 · 킬스위치 · 멱등 재조정 · secret redaction.
 - **키 없이도 완전 동작** — mock 모드가 실스키마(부분체결·세금·결제일·휴장·다계좌·에러)를 그대로 모사.
 
-## 💡 왜 이렇게 설계했나 (설계 철학)
+## 왜 이렇게 설계했나 (설계 철학)
 
 이 프로젝트에서 내가 내린 판단들:
 
@@ -50,11 +47,11 @@ LLM이 **실제 증권 계좌를 자연어로 다루게** 하는 MCP 서버 + �
 4. **"만들고 끝이 아니라, 검증이 자산이다."**
    실돈 주문경로는 **적대적 안전검수**(별도 리뷰어가 반증 우선으로 뜯어봄)를 통과해야 머지했고, 회귀는 **304개 유닛테스트**로 잠갔다. 스펙은 [`SPEC.md`](./SPEC.md)를 단일 진실원천으로 두고 코드보다 먼저 합의.
 
-## 🏗 아키텍처
+## 아키텍처
 
 ```mermaid
 flowchart LR
-    U["🗣 사용자<br/>자연어"] --> C["🤖 Claude"]
+    U["사용자<br/>자연어"] --> C["Claude"]
     C -- "MCP · stdio" --> S["server_mcp.py / server.py<br/>FastMCP 도구 등록<br/>(쓰기 도구는 ALLOW_LIVE_ORDERS=1일 때만)"]
     S --> SF["safety.py<br/>실주문 가드 · 한도 · 킬스위치 · 멱등 · 감사로그"]
     S --> PS["preview_store.py<br/>preview_token · confirm_phrase"]
@@ -90,43 +87,43 @@ server_mcp.py ── 21개 도구 등록 (mode gate: 실주문은 ALLOW_LIVE_ORD
 
 <a id="order-flow"></a>
 
-## 🛡 실주문 안전 흐름
+## 실주문 안전 흐름
 
 실주문 도구는 **새 주문 인자를 받지 않는다.** `plan_*`이 얼려 둔 스냅샷만 실행하며, 어느 게이트든 실패하면 실주문은 나가지 않는다.
 
 ```mermaid
 flowchart TD
-    A["🗣 자연어 요청<br/>'엔비디아 50만원 3분할 매수 플랜 짜줘'"] --> B["🤖 Claude"]
+    A["자연어 요청<br/>'엔비디아 50만원 3분할 매수 플랜 짜줘'"] --> B["Claude"]
     B -- "MCP 호출" --> P["plan_* 도구 (dry-run, 주문 미생성)<br/>파라미터 · tickSize · 세션 · 잔고 검증<br/>수수료 · 세금 · 환율 · 리스크 산출"]
-    P --> T["🎟 preview_token + confirm_phrase 발급"]
+    P --> T["preview_token + confirm_phrase 발급"]
     T -- "사람이 문구를 그대로 재입력" --> E["place_order_confirmed(preview_token, confirm_phrase)<br/>※ TOSS_ALLOW_LIVE_ORDERS=1일 때만 등록되는 도구"]
     E --> G1{"① preview_token 유효?<br/>미사용 · 미만료"}
     G1 -- "예" --> G2{"② confirm_phrase<br/>정확히 일치?"}
     G2 -- "예" --> INV["안전 불변식 7~12<br/>회로차단 · 통화 정합 · 주문/일일 한도<br/>개장시간 · 가격이탈 · 멱등(중복 차단)"]
     INV -- "통과" --> G3{"③ TOSS_LIVE=1?"}
     G3 -- "예" --> G4{"④ TOSS_KILL 재확인<br/>매 POST 직전"}
-    G4 -- "꺼짐" --> R["✅ 토스증권 실계좌 POST<br/>→ GET reconcile (재POST 금지)"]
-    G1 -- "아니오" --> X["⛔ 실주문 없음<br/>거부 · dry-run 강등"]
+    G4 -- "꺼짐" --> R["토스증권 실계좌 POST<br/>→ GET reconcile (재POST 금지)"]
+    G1 -- "아니오" --> X["실주문 없음<br/>거부 · dry-run 강등"]
     G2 -- "아니오" --> X
     INV -- "위반" --> X
-    G3 -- "아니오" --> MK["🧪 mock 응답<br/>네트워크 차단"]
+    G3 -- "아니오" --> MK["mock 응답<br/>네트워크 차단"]
     G4 -- "켜짐" --> X
 ```
 
-## 🎯 무엇을 보여주는가 (포트폴리오 관점)
+## 무엇을 보여주는가 (포트폴리오 관점)
 
 - **실돈 제약 하의 외부 API 통합** — OAuth2, rate-limit, 부분체결/재조정, 시간외·휴장 등 실거래 엣지케이스 처리.
 - **LLM 도구 설계** — 자연어 의도 → 합성 도구 → 안전한 실행까지의 인터페이스 설계.
 - **정량 전략 엔지니어링** — 변동성 적응 사이징·백테스트·저널 기반 손익귀속.
 - **안전공학·검증 규율** — 이중 게이트·킬스위치·감사로그·적대적 리뷰·304 테스트.
 
-> ⚠️ 이 저장소는 **엔지니어링·설계**를 보여주기 위한 것이다. 수익을 보장하지 않으며, 모든 매매 결과는 계좌주 책임이다(아래 면책 참조).
+**주의:** 이 저장소는 **엔지니어링·설계**를 보여주기 위한 것이다. 수익을 보장하지 않으며, 모든 매매 결과는 계좌주 책임이다(아래 면책 참조).
 
 ---
 
 <a id="disclaimer"></a>
 
-## ⚠️ 먼저 읽을 것 — 보안 경고 & 면책
+## 먼저 읽을 것 — 보안 경고 & 면책
 
 - **`client_secret`은 절대 클라이언트/채팅/로그에 노출하지 마라.** 서버(MCP 프로세스) 환경변수에만 둔다. 이 서버는 secret/토큰을 응답·로그·스키마 어디에도 출력하지 않도록 redaction을 건다.
 - **실주문은 전적으로 본인 책임이다.** 이 도구가 생성하는 주문 플랜·실행은 시장 상황·체결가·세금·수수료에 따라 손실로 이어질 수 있다. 표시환율·예상 체결가는 **체결을 보장하지 않는다.** 모든 매매의 결과(체결·미체결·손익·세금)는 **계좌주 본인의 책임**이며, 제작자/Claude/Anthropic은 책임지지 않는다.
@@ -136,7 +133,7 @@ flowchart TD
 
 ---
 
-## 🚀 1. 설치
+## 1. 설치
 
 요구사항: Python 3.10+ (공식 `mcp` SDK 요구사항 — 이 머신은 `python3.12`). 헬퍼 모듈과 `server.py --selfcheck`는 표준 라이브러리만으로 동작.
 
@@ -153,7 +150,7 @@ pip install -r requirements.txt
 # (requirements: mcp[cli] / fastmcp, httpx, pydantic)
 ```
 
-> mock 모드로만 쓸 거라면 키 없이 바로 다음 단계(§4 등록)로 가도 된다.
+mock 모드로만 쓸 거라면 키 없이 바로 다음 단계(§4 등록)로 가도 된다.
 
 ---
 
@@ -166,7 +163,7 @@ pip install -r requirements.txt
    비공식 선행 CLI 참고: https://github.com/JungHoonGhae/tossinvest-cli
 5. 발급받은 키는 이 MCP 전용으로 쓴다(stock-dashboard 등 다른 도구와 **다른 client_id 권장** — 동일 키 충돌 시 토큰 무효화로 401이 번갈아 터질 수 있음).
 
-> **키 발급 전이라도 이 서버는 mock으로 완전히 동작한다.** 키는 실계좌·실시세를 붙일 때만 필요하다.
+**키 발급 전이라도 이 서버는 mock으로 완전히 동작한다.** 키는 실계좌·실시세를 붙일 때만 필요하다.
 
 ---
 
@@ -303,7 +300,7 @@ mock은 실스키마(부분체결·세금·결제일·휴장일·다계좌·에�
 3. 게이트 4중: `preview_token` 유효 + `confirm_phrase` 일치 + `TOSS_LIVE=1` + 매 POST 직전 `TOSS_KILL` 재확인.
 4. POST 후 자동 reconcile(GET으로 접수 확정, 재POST 금지), `409=이미 접수=성공` 처리.
 
-> confirm_phrase를 빼먹으면 실행되지 않고 dry-run으로 강등된다. 이것은 의도된 안전장치다.
+**`confirm_phrase`를 빼먹으면 실행되지 않고 dry-run으로 강등된다.** 이것은 의도된 안전장치다.
 
 ---
 
@@ -331,7 +328,7 @@ TOSS_KILL=1
 
 ---
 
-## 🛠 기술 스택
+## 기술 스택
 
 | 영역 | 사용 |
 |---|---|
