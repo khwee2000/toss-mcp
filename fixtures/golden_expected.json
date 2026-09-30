@@ -1,0 +1,120 @@
+{
+  "_seed": 20260615,
+  "_note": "Expected outputs of the deterministic mock. QA asserts mock == this (tolerances: rsi 0.1, vwapGap 0.05).",
+  "symbols": {
+    "005930": {
+      "dailyBars": 250,
+      "intradayBars": 390,
+      "lastPrice": "320266.0",
+      "indicators": {
+        "last": 320266,
+        "rsi14": 23.72,
+        "ma20": 331911,
+        "ma60": 334424,
+        "ma120": 340405,
+        "tradeStrength": 46.8,
+        "swingScore": 45,
+        "note": "외국인수급은 토스 미제공 — stock-dashboard(Naver) 별도 출처 필요",
+        "price": 320266,
+        "change": -977,
+        "changePct": -0.3,
+        "rsi": 23.72,
+        "disp20": -3.51,
+        "disp60": -4.23,
+        "disp120": -5.92,
+        "arrange": "역배열",
+        "slopePct": -1.2,
+        "slopeDir": "down",
+        "status": "낙폭과대",
+        "volRatio": 1.1,
+        "volValue": 9941,
+        "dayRange": 1.8,
+        "gap": 0.0,
+        "hi52": 398091,
+        "lo52": 320266,
+        "pos52": 0,
+        "ret1y": -14.8,
+        "rs": null,
+        "scalpScore": 40,
+        "scalpGrade": "C",
+        "bars": 250,
+        "_disclaimer": "참고용 지표 — 매매 추천 아님"
+      },
+      "vwap": {
+        "vwapNow": 320790.0241,
+        "last": 320688.0,
+        "vwapGap": -0.0318,
+        "rangePos": 37.73
+      },
+      "orderbook": {
+        "totalBidQuantity": 3653,
+        "totalAskQuantity": 2120,
+        "spread": "1000.0"
+      },
+      "supplyDemand": {
+        "_source": "mock",
+        "supported": true,
+        "foreignNet5d": -1770.0,
+        "foreignTrend": "순매도"
+      },
+      "holdingsCount": 7
+    },
+    "NVDA": {
+      "dailyBars": 250,
+      "intradayBars": 390,
+      "lastPrice": "217.32",
+      "indicators": {
+        "last": 217,
+        "rsi14": 32.09,
+        "ma20": 222,
+        "ma60": 227,
+        "ma120": 221,
+        "tradeStrength": 80.8,
+        "swingScore": 25,
+        "note": "외국인수급은 토스 미제공 — stock-dashboard(Naver) 별도 출처 필요",
+        "price": 217,
+        "change": 0,
+        "changePct": -0.2,
+        "rsi": 32.09,
+        "disp20": -1.9,
+        "disp60": -4.44,
+        "disp120": -1.74,
+        "arrange": "혼조",
+        "slopePct": 1.39,
+        "slopeDir": "up",
+        "status": "눌림목후보",
+        "volRatio": 1.0,
+        "volValue": 3,
+        "dayRange": 1.9,
+        "gap": 0.0,
+        "hi52": 236,
+        "lo52": 197,
+        "pos52": 52,
+        "ret1y": 9.9,
+        "rs": null,
+        "scalpScore": 0,
+        "scalpGrade": "D",
+        "bars": 250,
+        "_disclaimer": "참고용 지표 — 매매 추천 아님"
+      },
+      "vwap": {
+        "vwapNow": 217.5255,
+        "last": 217.47,
+        "vwapGap": -0.0255,
+        "rangePos": 42.63
+      },
+      "orderbook": {
+        "totalBidQuantity": 2789,
+        "totalAskQuantity": 3320,
+        "spread": "0.02"
+      },
+      "supplyDemand": {
+        "_source": "mock",
+        "supported": false,
+        "foreignNet5d": null,
+        "foreignTrend": null
+      },
+      "holdingsCount": 7
+    }
+  }
+}

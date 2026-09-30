@@ -1,0 +1,16 @@
+# Toss Trader MCP server dependencies.
+#
+# Only the official MCP Python SDK is required to actually *serve* over stdio.
+# Everything else (HTTP, OAuth, mock data, indicators) is pure stdlib, so the
+# helper modules and `python3 server.py --selfcheck` run with no third-party
+# packages at all.
+#
+# NOTE: the `mcp` SDK requires Python >= 3.10. On this machine use python3.12
+# (miniforge). Install:  python3.12 -m pip install -r requirements.txt
+#
+# K9(의존성 고정): 아래는 2026-07-18 라이브 검증된 정확한 조합 — 무단 업그레이드로
+# 실주문 경로가 깨지는 것 방지. 업그레이드 시 ./ci.sh 통과 후에만 반영.
+mcp==1.27.2
+httpx==0.28.1
+httpx-sse==0.4.3
+anyio==4.13.0

@@ -1,0 +1,21 @@
+# Secrets & runtime state — never commit.
+.env
+token.json
+preview.json
+*.token
+.toss-trader/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# macOS / editor junk
+.DS_Store
+**/.DS_Store
+
+# Local backups & build tooling (not for portfolio)
+.backups/
+.claude/

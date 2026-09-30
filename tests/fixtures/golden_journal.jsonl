@@ -1,0 +1,10 @@
+{"ts": "2026-07-01T23:00:00+09:00", "event": "BUY_WORKING", "sym": "AAA", "orderId": "a1", "usd": 30.0}
+{"ts": "2026-07-01T23:01:00+09:00", "event": "BUY_FILLED", "sym": "AAA", "orderId": "a1", "fillQty": 0.3, "fillPrice": 100.0, "filledUsd": 30.0, "cum": 0.3}
+{"ts": "2026-07-02T23:00:00+09:00", "event": "BUY_PARTIAL", "sym": "BBB", "orderId": "b1", "fillQty": 0.1, "fillPrice": 50.0, "filledUsd": 5.0, "cum": 0.1}
+{"ts": "2026-07-02T23:30:00+09:00", "event": "BUY_FILLED", "sym": "BBB", "orderId": "b1", "fillQty": 0.1, "fillPrice": 51.0, "filledUsd": 5.1, "cum": 0.2}
+{"ts": "2026-07-03T23:00:00+09:00", "event": "BUY_FILLED", "sym": "CCC", "orderId": "c1", "fillQty": 1.0, "fillPrice": 0, "filledUsd": 20.0}
+{"ts": "2026-07-05T23:00:00+09:00", "event": "SELL_FILLED", "sym": "AAA", "orderId": "a2", "fillQty": 0.3, "fillPrice": 110.0, "filledUsd": 33.0, "exitCat": "TARGET"}
+{"ts": "2026-07-06T23:00:00+09:00", "event": "SELL_PARTIAL", "sym": "BBB", "orderId": "b2", "fillQty": 0.1, "fillPrice": 55.0, "filledUsd": 5.5, "exitCat": "PTP", "cum": 0.1}
+{"ts": "2026-07-07T23:00:00+09:00", "event": "SELL_FILLED", "sym": "CCC", "orderId": "c2", "fillQty": 1.0, "fillPrice": 0, "filledUsd": 19.0, "exitCat": "STOP"}
+{"ts": "2026-07-08T23:00:00+09:00", "event": "BUY_WORKING", "sym": "DDD", "orderId": "d1", "usd": 15.0}
+{"ts": "2026-07-08T23:30:00+09:00", "event": "BUY_REJECTED", "sym": "DDD", "orderId": "d1", "status": "CANCELED"}
