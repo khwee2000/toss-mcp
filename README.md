@@ -1,14 +1,32 @@
-# toss-trader — 내 돈을 아는 AI 트레이더 (Claude × 토스증권 Open API MCP)
+<div align="center">
 
-자연어로 Claude에게 말하면, 토스증권 실계좌·실시세에 연결해 조회하고, 주문을 플랜→검증→확정 2단계로 실행한다.
+# 📈 toss-trader
 
-> "내 계좌 어때?" · "엔비디아 분석해줘" · "엔비디아 50만원 3분할 매수 플랜 짜줘"
+**내 돈을 아는 AI 트레이더 — Claude × 토스증권 Open API MCP 서버**
 
-`Python 3.9+` · `MCP (FastMCP)` · `토스증권 Open API v1.2` · **304 유닛테스트** · **mock 기본 · 실돈 안전설계**
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](./requirements.txt)
+[![MCP](https://img.shields.io/badge/MCP-FastMCP-000000?style=flat-square&logo=modelcontextprotocol&logoColor=white)](https://modelcontextprotocol.io)
+[![Claude](https://img.shields.io/badge/Claude-MCP%20Server-D97757?style=flat-square&logo=claude&logoColor=white)](#mcp-register)
+[![Toss Open API](https://img.shields.io/badge/%ED%86%A0%EC%8A%A4%EC%A6%9D%EA%B6%8C-Open%20API%20v1.2-0064FF?style=flat-square)](https://corp.tossinvest.com/ko/open-api)
+[![unit tests](https://img.shields.io/badge/unit%20tests-304%20passing-2EA44F?style=flat-square)](./tests/test_index_executor.py)
+[![default mode](https://img.shields.io/badge/default-mock%20%C2%B7%20dry--run-lightgrey?style=flat-square)](#mock-mode)
+[![safety](https://img.shields.io/badge/%EC%95%88%EC%A0%84-13%EB%8C%80%20%EB%B6%88%EB%B3%80%EC%8B%9D-E5534B?style=flat-square)](#order-flow)
+
+자연어로 Claude에게 말하면, 토스증권 실계좌·실시세에 연결해 조회하고,<br/>
+주문은 **플랜 → 검증 → 확정** 2단계로만 실행한다.
+
+`"내 계좌 어때?"` · `"엔비디아 분석해줘"` · `"엔비디아 50만원 3분할 매수 플랜 짜줘"`
+
+🔗 [설계 스펙 (SPEC.md)](./SPEC.md) · [실주문 안전 흐름](#order-flow) · [보안 경고 & 면책](#disclaimer) · [Profile](https://github.com/khwee2000)
+
+</div>
+
+> [!WARNING]
+> **실제 돈이 오가는 도구다.** 기본은 mock(네트워크 차단)이고, 실주문은 `TOSS_ALLOW_LIVE_ORDERS=1` + `preview_token` + 재입력 `confirm_phrase`를 모두 거쳐야만 나간다. 수익을 보장하지 않으며, 모든 매매 결과는 계좌주 본인 책임이다 — [보안 경고 & 면책](#disclaimer)을 먼저 읽을 것.
 
 ---
 
-## 한눈에
+## ✨ 한눈에
 
 LLM이 **실제 증권 계좌를 자연어로 다루게** 하는 MCP 서버 + 그 위에서 도는 **변동성 적응형 스윙 트레이딩 엔진**이다. 핵심은 "AI가 실돈을 만진다"는 전제를 정면으로 받아, **안전을 1순위 제약**으로 놓고 전체를 설계한 것.
 
@@ -16,7 +34,7 @@ LLM이 **실제 증권 계좌를 자연어로 다루게** 하는 MCP 서버 + �
 - **실돈 안전 13대 불변식** — mock 기본 · 단계적 해제 · 이중 게이트 실주문 · 킬스위치 · 멱등 재조정 · secret redaction.
 - **키 없이도 완전 동작** — mock 모드가 실스키마(부분체결·세금·결제일·휴장·다계좌·에러)를 그대로 모사.
 
-## 왜 이렇게 설계했나 (설계 철학)
+## 💡 왜 이렇게 설계했나 (설계 철학)
 
 이 프로젝트에서 내가 내린 판단들:
 
@@ -32,7 +50,26 @@ LLM이 **실제 증권 계좌를 자연어로 다루게** 하는 MCP 서버 + �
 4. **"만들고 끝이 아니라, 검증이 자산이다."**
    실돈 주문경로는 **적대적 안전검수**(별도 리뷰어가 반증 우선으로 뜯어봄)를 통과해야 머지했고, 회귀는 **304개 유닛테스트**로 잠갔다. 스펙은 [`SPEC.md`](./SPEC.md)를 단일 진실원천으로 두고 코드보다 먼저 합의.
 
-## 아키텍처
+## 🏗 아키텍처
+
+```mermaid
+flowchart LR
+    U["🗣 사용자<br/>자연어"] --> C["🤖 Claude"]
+    C -- "MCP · stdio" --> S["server_mcp.py / server.py<br/>FastMCP 도구 등록<br/>(쓰기 도구는 ALLOW_LIVE_ORDERS=1일 때만)"]
+    S --> SF["safety.py<br/>실주문 가드 · 한도 · 킬스위치 · 멱등 · 감사로그"]
+    S --> PS["preview_store.py<br/>preview_token · confirm_phrase"]
+    S --> CL["toss_client.py<br/>OAuth2 토큰 캐시 · rate 백오프 · 에러 정규화"]
+    S --> IN["indicators.py<br/>RSI · 이평 · ATR · 체결강도"]
+    CFG["config.py<br/>BYOK · mock/live 판정 · redaction"] -.-> CL
+    CL -- "TOSS_LIVE=1" --> API[("토스증권<br/>Open API")]
+    CL -- "기본값" --> M[("mock_data.py<br/>fixture")]
+    EX["execute.py<br/>스윙 실행기 · 30분 크론"] --> S
+    EX --> SC["stock_screener.py<br/>RS 랭킹 · 매수존"]
+    EX --> IE["index_engine.py<br/>레짐 · 추세"]
+```
+
+<details>
+<summary>모듈 트리 (텍스트)</summary>
 
 ```
 자연어 (Claude)
@@ -49,7 +86,34 @@ server_mcp.py ── 21개 도구 등록 (mode gate: 실주문은 ALLOW_LIVE_ORD
    └─ execute.py       스윙 실행기: 리스크 사이징·k×ATR 목표·저널 원장·청산 판정·30분 크론
 ```
 
-## 무엇을 보여주는가 (포트폴리오 관점)
+</details>
+
+<a id="order-flow"></a>
+
+## 🛡 실주문 안전 흐름
+
+실주문 도구는 **새 주문 인자를 받지 않는다.** `plan_*`이 얼려 둔 스냅샷만 실행하며, 어느 게이트든 실패하면 실주문은 나가지 않는다.
+
+```mermaid
+flowchart TD
+    A["🗣 자연어 요청<br/>'엔비디아 50만원 3분할 매수 플랜 짜줘'"] --> B["🤖 Claude"]
+    B -- "MCP 호출" --> P["plan_* 도구 (dry-run, 주문 미생성)<br/>파라미터 · tickSize · 세션 · 잔고 검증<br/>수수료 · 세금 · 환율 · 리스크 산출"]
+    P --> T["🎟 preview_token + confirm_phrase 발급"]
+    T -- "사람이 문구를 그대로 재입력" --> E["place_order_confirmed(preview_token, confirm_phrase)<br/>※ TOSS_ALLOW_LIVE_ORDERS=1일 때만 등록되는 도구"]
+    E --> G1{"① preview_token 유효?<br/>미사용 · 미만료"}
+    G1 -- "예" --> G2{"② confirm_phrase<br/>정확히 일치?"}
+    G2 -- "예" --> INV["안전 불변식 7~12<br/>회로차단 · 통화 정합 · 주문/일일 한도<br/>개장시간 · 가격이탈 · 멱등(중복 차단)"]
+    INV -- "통과" --> G3{"③ TOSS_LIVE=1?"}
+    G3 -- "예" --> G4{"④ TOSS_KILL 재확인<br/>매 POST 직전"}
+    G4 -- "꺼짐" --> R["✅ 토스증권 실계좌 POST<br/>→ GET reconcile (재POST 금지)"]
+    G1 -- "아니오" --> X["⛔ 실주문 없음<br/>거부 · dry-run 강등"]
+    G2 -- "아니오" --> X
+    INV -- "위반" --> X
+    G3 -- "아니오" --> MK["🧪 mock 응답<br/>네트워크 차단"]
+    G4 -- "켜짐" --> X
+```
+
+## 🎯 무엇을 보여주는가 (포트폴리오 관점)
 
 - **실돈 제약 하의 외부 API 통합** — OAuth2, rate-limit, 부분체결/재조정, 시간외·휴장 등 실거래 엣지케이스 처리.
 - **LLM 도구 설계** — 자연어 의도 → 합성 도구 → 안전한 실행까지의 인터페이스 설계.
@@ -59,6 +123,8 @@ server_mcp.py ── 21개 도구 등록 (mode gate: 실주문은 ALLOW_LIVE_ORD
 > ⚠️ 이 저장소는 **엔지니어링·설계**를 보여주기 위한 것이다. 수익을 보장하지 않으며, 모든 매매 결과는 계좌주 책임이다(아래 면책 참조).
 
 ---
+
+<a id="disclaimer"></a>
 
 ## ⚠️ 먼저 읽을 것 — 보안 경고 & 면책
 
@@ -70,9 +136,9 @@ server_mcp.py ── 21개 도구 등록 (mode gate: 실주문은 ALLOW_LIVE_ORD
 
 ---
 
-## 1. 설치
+## 🚀 1. 설치
 
-요구사항: Python 3.9+
+요구사항: Python 3.10+ (공식 `mcp` SDK 요구사항 — 이 머신은 `python3.12`). 헬퍼 모듈과 `server.py --selfcheck`는 표준 라이브러리만으로 동작.
 
 ```bash
 # 저장소(또는 toss-trader/ 디렉토리)로 이동
@@ -134,6 +200,8 @@ chmod 600 ~/toss-mcp/.env
 3. 충분히 검증되면: `TOSS_ALLOW_LIVE_ORDERS=1` → **실주문** 도구 등록.
 
 ---
+
+<a id="mcp-register"></a>
 
 ## 4. Claude에 MCP 등록
 
@@ -198,6 +266,8 @@ claude mcp add toss-trader \
 
 ---
 
+<a id="mock-mode"></a>
+
 ## 5. mock 모드로 먼저 써보기
 
 `TOSS_LIVE=0`(기본)이면 서버는 **네트워크를 차단하고 fixture로 응답**한다. 모든 mock 응답엔 `_mode: "mock"` + `MOCK` 프리픽스가 붙는다.
@@ -258,3 +328,19 @@ TOSS_KILL=1
 | 계좌 조회 401/누락 | `X-Tossinvest-Account`(계좌 컨텍스트) 이슈 — 키 발급 후 실제 헤더 형식 확인 필요(SPEC §9) |
 
 자세한 설계·엔드포인트·보안 모델·미검증 항목은 [`SPEC.md`](./SPEC.md) 참조.
+
+---
+
+## 🛠 기술 스택
+
+| 영역 | 사용 |
+|---|---|
+| 언어 | Python 3.12 (`mcp` SDK는 3.10+ 필요) |
+| LLM 인터페이스 | Model Context Protocol — 공식 Python SDK `mcp==1.27.2` (FastMCP, stdio) |
+| 브로커 API | 토스증권 Open API v1.2 · OAuth2 `client_credentials` |
+| HTTP | `httpx` (나머지 OAuth·mock·지표는 표준 라이브러리) |
+| 검증 | `unittest` 회귀 스위트 304개 (`./ci.sh` = py_compile + 테스트) |
+
+<div align="center">
+<sub>Made by <a href="https://github.com/khwee2000">김민수 (@khwee2000)</a></sub>
+</div>
