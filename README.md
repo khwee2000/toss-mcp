@@ -2,7 +2,9 @@
 
 # toss-trader
 
-**내 돈을 아는 AI 트레이더 — Claude × 토스증권 Open API MCP 서버**[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](./requirements.txt)
+**내 돈을 아는 AI 트레이더 — Claude × 토스증권 Open API MCP 서버**
+
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](./requirements.txt)
 [![MCP](https://img.shields.io/badge/MCP-FastMCP-000000?style=flat-square&logo=modelcontextprotocol&logoColor=white)](https://modelcontextprotocol.io)
 [![Claude](https://img.shields.io/badge/Claude-MCP%20Server-D97757?style=flat-square&logo=claude&logoColor=white)](#mcp-register)
 [![Toss Open API](https://img.shields.io/badge/%ED%86%A0%EC%8A%A4%EC%A6%9D%EA%B6%8C-Open%20API%20v1.2-0064FF?style=flat-square)](https://corp.tossinvest.com/ko/open-api)
